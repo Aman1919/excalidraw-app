@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+body{
+margin: 0px;
+box-sizing: border-box;
+padding: 0px;
+overflow: hidden;
+}
+
+canvas{
+    z-index: 0;
+}
+
+@theme{
+    --color-dark-blue:#232329;
+    --color-purple:#403E6A
+}
+
+.toolbar,.edit,.menu{
+    z-index: 2;
+}
+
+body{
+    background-color: #403e6a1c;
+}
