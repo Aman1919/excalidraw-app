@@ -21,6 +21,7 @@ export default class DrawEngine {
     setCurrentTool:(tool:string)=>void
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rctx: any;
+    action = ''
     constructor(
         ctx: CanvasRenderingContext2D,
         canvas: HTMLCanvasElement,
@@ -73,13 +74,14 @@ export default class DrawEngine {
         } else if (action == "mousemove") {
             this.mousemove(x,y)
         }else if(action=="click"){
-          this.click(x,y)
+                this.click(x,y)
         }
+        this.action = action;
     }
 
     click(x:number,y:number){
-         if(this.currentTool ==='select'){
-            this.selection.MouseCollisionWithElements(x,y,this.shapes)
+         if(this.currentTool ==='select'&&this.mode === "IDLE"){
+            this.selection.clickOnElement(x,y,this.shapes)
           }else{
             // c
           }
@@ -107,7 +109,7 @@ export default class DrawEngine {
             }else if(this.mode === 'DRAWING') {
                 this.updateDraftCoords(x,y)
             }else if(this.mode === 'MOVING'){
-                 this.selection.MoveElement(x,y)
+                 this.selection.updateMoveCoords(x,y)
             } 
             if(this.mode !== 'IDLE'){   
                 this.redraw()
