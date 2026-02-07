@@ -23,8 +23,10 @@ export default class Element {
   curveStepCount: 9,
 
   strokeLineDash: 0,
-};;
-constructor(x1:number,y1:number,x2:number,y2:number,type:string,rctx:any,width:number,height:number){
+};
+angle = 0;
+ctx:CanvasRenderingContext2D;
+constructor(x1:number,y1:number,x2:number,y2:number,type:string,rctx:any,width:number,height:number,ctx:CanvasRenderingContext2D){
 this.x1 = x1;
 this.y1 = y1;
 this.type = type;
@@ -34,11 +36,31 @@ this.height = height;
 this.width = width;
 this.id = window.crypto.randomUUID()
 this.rctx = rctx
-// this.draw()  
+this.ctx = ctx
 }
-draw(){
-DrawDiagrams(this.x1,this.y1,this.width,this.height,this.type,this.rctx,this.x2,this.y2,this.style)
+draw() {
+  const cx = (this.x1 + this.x2) / 2;
+  const cy = (this.y1 + this.y2) / 2;
+
+  this.drawType(cx, cy);
 }
+
+drawType(cx:number,cy:number){
+    if(this.type==='rectangle'){
+this.rctx.rectangle(this.x1,this.y1,this.width,this.height,this.style)
+    }else if(this.type === 'line'){
+const a = rotatePoint(this.x1, this.y1, cx, cy, this.angle);
+  const b = rotatePoint(this.x2, this.y2, cx, cy, this.angle);
+
+  this.rctx.line(a.x, a.y, b.x, b.y, this.style);
+    }else if(this.type === 'circle'){
+  const c = rotatePoint(this.x1, this.y1, cx, cy, this.angle);
+  this.rctx.ellipse(c.x, c.y, this.width, this.height, this.style);
+    }
+
+}
+
+
 
 selected(){
     this.selectMode = true
@@ -64,6 +86,57 @@ updateStyle(){
     
 }
 
+scale(dx: number, dy: number, handle: string) {
+  switch (handle) {
+    case "right":
+      this.x2 += dx;
+      break;
+
+    case "left":
+      this.x1 += dx;
+      break;
+
+    case "bottom":
+      this.y2 += dy;
+      break;
+
+    case "top":
+      this.y1 += dy;
+      break;
+    case "equal": {
+      const cx = (this.x1 + this.x2) / 2;
+      const cy = (this.y1 + this.y2) / 2;
+
+      this.x1 -= dx;
+      this.x2 += dx;
+      this.y1 -= dy;
+      this.y2 += dy;
+
+      // re-center
+      const ncx = (this.x1 + this.x2) / 2;
+      const ncy = (this.y1 + this.y2) / 2;
+
+      const offx = cx - ncx;
+      const offy = cy - ncy;
+
+      this.x1 += offx;
+      this.x2 += offx;
+      this.y1 += offy;
+      this.y2 += offy;
+      break;
+    }
+  }
+
+  // update dimensions
+  this.width = this.x2 - this.x1;
+  this.height = this.y2 - this.y1;
+}
+
+
+rotate(angle:number){
+this.angle = angle;
+}
+
 updateDraftCoords({x,y}:Vector2d){
 this.width = x - this.x1;
 this.height = y - this.y1;
@@ -74,5 +147,22 @@ this.y2 = y;
 
 
 
+
 }
 
+
+function rotatePoint(
+  x: number,
+  y: number,
+  cx: number,
+  cy: number,
+  angle: number
+) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  return {
+    x: cos * (x - cx) - sin * (y - cy) + cx,
+    y: sin * (x - cx) + cos * (y - cy) + cy,
+  };
+}

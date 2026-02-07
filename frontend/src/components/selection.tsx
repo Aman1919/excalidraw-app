@@ -16,9 +16,9 @@ selectionAreaCoords: Area = {
   };
   selectionBorder:Area | null = null
  isDragging = true;
-    moveCoords = { x:0, y:0 };
-mode:"IDLE" | "DRAWING" | "SELECTING" | "MOVING"="IDLE"
- 
+    lastCoords = { x:0, y:0 };
+mode:"IDLE" | "DRAWING" | "SELECTING" | "MOVING"|"ROTATING"|"SCALING"="IDLE"
+Scalingtype:"left"|'right'|'top'|'bottom'|"equal"="equal"
 draw(rctx: any) {
     const { x1, y1, width, height } = this.selectionAreaCoords;
     DrawDiagrams(x1, y1, width, height, "select", rctx);
@@ -50,6 +50,14 @@ ScanElements(elements: Element[]) {
     
     const { min_x, min_y, max_x, max_y } = this.min_max_x_y();
     console.log(min_x, min_y, max_x, max_y);
+    this.selectionBorder = {
+      x1:min_x,
+      x2:max_x,
+      y1:min_y,
+      y2:max_y,
+      width:max_x -min_x,
+      height:max_y - min_y
+    }
     DrawDiagrams(
       min_x,
       min_y,

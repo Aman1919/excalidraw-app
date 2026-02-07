@@ -9,10 +9,10 @@ export default function Canvas({ currentTool, setCurrentTool }: CanvasProps) {
   const CanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [draw, setDraw] = useState<DrawEngine | null>(null);
   const [mode, setMode] = useState<
-    "IDLE" | "DRAWING" | "SELECTING" | "SELECTED" | "MOVING"
+    "IDLE" | "DRAWING" | "SELECTING" | "SELECTED" | "MOVING" | "SCALING"| "ROTATING"
   >("IDLE");
   const Elements = ["rectangle", "line", "circle"];
-  const [selectedElements,setSelectedElement]=useState<Element | null>(null);
+  // const [selectedElements,setSelectedElement]=useState<Element | null>(null);
   useEffect(() => {
     if (!CanvasRef || draw) return;
     const canvas = CanvasRef.current;
@@ -26,7 +26,7 @@ export default function Canvas({ currentTool, setCurrentTool }: CanvasProps) {
     if (!draw) return;
 
     const { x, y } = draw.getCanvasCoord(e);
-    const el = draw.mouseDownOnElement(x, y);
+    const el = draw.Hover({x,y});
 
     if (Elements.includes(currentTool)) {
       setMode("DRAWING");
@@ -40,7 +40,11 @@ export default function Canvas({ currentTool, setCurrentTool }: CanvasProps) {
         draw.startMove({ x, y });
       } else if (!el) {
         setMode("SELECTING");
-        draw.startSelection(x, y);
+        draw.startSelection({x,y});
+      }else if(el&&el.type === 'selection_border'){
+        draw.startTransform(el.message,x,y)
+        const a = draw.istransforming();
+        if(a)setMode(a)
       }
 
       draw.redraw();
@@ -50,16 +54,20 @@ export default function Canvas({ currentTool, setCurrentTool }: CanvasProps) {
   function MouseMove(e: MouseEvent<HTMLCanvasElement>) {
     if (!draw) return;
     const { x, y } = draw.getCanvasCoord(e);
+    draw.Hover({x,y});
     if (Elements.includes(currentTool) && mode === "DRAWING") {
       draw.updateDraftCoordinates(x, y);
       draw.redraw();
     } else if (currentTool === "select") {
       if (mode == "SELECTING") {
-        draw.updateSelection(x, y);
+        draw.updateSelection({x,y});
         draw.redraw();
       } else if (mode === "MOVING") {
         draw.updateMoving({ x, y });
         draw.redraw();
+      }else if(mode === 'ROTATING'||mode==='SCALING'){
+      draw.transforming(x,y)
+      draw.redraw();
       }
     }
   }
@@ -67,7 +75,7 @@ export default function Canvas({ currentTool, setCurrentTool }: CanvasProps) {
   function MouseUp(e: MouseEvent<HTMLCanvasElement>) {
     if (!draw) return;
     const { x, y } = draw.getCanvasCoord(e);
-    const el = draw.mouseDownOnElement(x, y);
+    const el = draw.HoverOverNonSelectedElement({x,y});
 
     if (Elements.includes(currentTool) && mode === "DRAWING") {
       draw.addDraftElement();
@@ -84,6 +92,9 @@ export default function Canvas({ currentTool, setCurrentTool }: CanvasProps) {
         draw.stopMoving();
         setMode("IDLE");
         draw.redraw();
+      }else if(mode ==='ROTATING'){
+       draw.stopTransforming()
+       setMode("SELECTED")
       } else if (el) {
         draw.addSelectedElements(el);
         setMode("SELECTED");
