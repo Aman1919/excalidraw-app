@@ -1,18 +1,16 @@
-// import { useState } from 'react'
-import ToolBar from "./components/toolbar"
-import Edit from "./components/edit"
-import Menu from "./components/menu"
-import Canvas from "./components/canvas"
+  import ToolBar from "./components/toolbar"
 import {useState} from "react"
+import Canvas from "./components/canvas"
+// import StyleBar from "./components/stylebar"
+
 function App() {
-const [currentTool,setCurrentTool]=useState("select")
+const [currentTool,setCurrentTool] = useState("select")
   return (
-    <div className="relative">
-      <ToolBar currentTool={currentTool} setCurrentTool={setCurrentTool}/>
-      <Canvas currentTool={currentTool} setCurrentTool={setCurrentTool}/>
-      <Menu/>
-      <Edit/>
-    </div>
+    <div>
+    <ToolBar currentTool={currentTool} setCurrentTool={setCurrentTool}/>
+    <Canvas currentTool={currentTool} setCurrentTool={setCurrentTool}/>
+    {/* <StyleBar/> */}
+          </div>
   )
 }
 

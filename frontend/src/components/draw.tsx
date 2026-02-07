@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type StyleState from "../../type"
+import type StyleState from "../type"
 
 export function DrawDiagrams(x1:number,y1:number,width:number,height:number,type:string,rctx:any,x2:number=0,y2:number=0,style:StyleState = {roughness: 0.5, stroke: 'white', strokeWidth: 2 }){
 
@@ -14,14 +14,14 @@ function circle() {
 }
 
 function line() {
-            rctx.line(x1,y1,x2,y2,{ stroke: "white" })
+            rctx.line(x1,y1,x2,y2,{ stroke: "white" },style)
 }
 
 function selectionBorder() {
     const X1=x1-10;
-    const X2=x2+20;
+    const X2=x2+10;
     const Y1=y1-10;
-    const Y2=y2+20;
+    const Y2=y2+10;
     const color = "#a8a5ff"
     const strokeWidth = 0.7
     rctx.rectangle(X1, Y1, X2-X1, Y2-Y1, {roughness: 0, stroke: color, strokeWidth });

@@ -11,3 +11,5 @@ export default interface  StyleState{
     strokeLineDash?:number;
 }
 export type Area= {x1:number,y1:number,x2:number,y2:number,width:number,height:number}
+export type Vector2d = {x:number,y:number};
+export type rect = {x:number,y:number,width:number,height:number};

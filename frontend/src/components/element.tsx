@@ -1,10 +1,29 @@
-import StyleState  from "./stylestate"
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {DrawDiagrams} from "./drawgraphics"
+import type { Vector2d } from "../type";
+import {DrawDiagrams} from "./draw"
+import type StyleState from "../type"
+
 export default class Element {
-    x1:number;y1:number;type:string;stylestate:StyleState;x2:number;y2:number;
+    x1:number;y1:number;type:string;x2:number;y2:number;
     selectMode = false;id:string;rctx:any;
     width:number;height:number;
+    style:StyleState = {
+  roughness: 1.5,
+  bowing: 1,
+
+  stroke: "#ffffff",
+  strokeWidth: 2,
+
+  fill: "transparent",
+  fillStyle: "solid",
+
+  hachureAngle: 60,
+  hachureGap: 8,
+
+  curveStepCount: 9,
+
+  strokeLineDash: 0,
+};;
 constructor(x1:number,y1:number,x2:number,y2:number,type:string,rctx:any,width:number,height:number){
 this.x1 = x1;
 this.y1 = y1;
@@ -13,13 +32,12 @@ this.x2=x2;
 this.y2=y2
 this.height = height;
 this.width = width;
-this.stylestate = new StyleState()
 this.id = window.crypto.randomUUID()
 this.rctx = rctx
 // this.draw()  
 }
 draw(){
-DrawDiagrams(this.x1,this.y1,this.width,this.height,this.type,this.rctx,this.x2,this.y2)
+DrawDiagrams(this.x1,this.y1,this.width,this.height,this.type,this.rctx,this.x2,this.y2,this.style)
 }
 
 selected(){
@@ -42,10 +60,19 @@ deselected(){
     this.draw();
 }
 
+updateStyle(){
+    
+}
+
+updateDraftCoords({x,y}:Vector2d){
+this.width = x - this.x1;
+this.height = y - this.y1;
+this.x2 = x;
+this.y2 = y;
+}
+
+
+
 
 }
 
-/**
- * x2/width
- * y2/ height
- */
