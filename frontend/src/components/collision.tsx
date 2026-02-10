@@ -1,5 +1,6 @@
 import Element from "./element"
 import {type Area} from "../type"
+
 export function pointElementCollision(x:number,y:number,shape:Element){
     const min_x = Math.min(shape.x1,shape.x2)
     const min_y = Math.min(shape.y1,shape.y2)
@@ -23,4 +24,22 @@ export function selectionCollision(shape:Element,selectCoords:Area){
 
    return (smin_x<=min_x && smin_x<=max_x && smax_x>=min_x && smax_x>=max_x && smin_y<=min_y && smin_y<=max_y && smax_y>=min_y && smax_y>=max_y)
 }
+
+
+export function min_max_x_y(selectedElements:Element[]) {
+    // 10 difference bcz space btw the element and the border
+    const min_x = Math.min(
+      ...selectedElements.map((el) => Math.min(el.x1, el.x2)),
+    ) - 10 ;
+    const max_x = Math.max(
+      ...selectedElements.map((el) => Math.max(el.x1, el.x2)),
+    ) + 10;
+    const min_y = Math.min(
+      ...selectedElements.map((el) => Math.min(el.y1, el.y2)),
+    ) - 10;
+    const max_y = Math.max(
+      ...selectedElements.map((el) => Math.max(el.y1, el.y2)),
+    ) + 10;
+    return { min_x, min_y, max_x, max_y };
+  }
 

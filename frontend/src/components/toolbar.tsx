@@ -24,7 +24,7 @@ export default function ToolBar({ setCurrentTool,currentTool }: ToolBarProps) {
   { name: "lock", icon: FiLock},
   { name: "hand", icon: FaHandPaper},
   { name: "select", icon: FiMousePointer},
-  { name: "rectangle", icon: FiSquare},
+  { name: "rect", icon: FiSquare},
   { name: "circle", icon: FiCircle},
   { name: "diamond", icon: BsDiamond},
   { name: "line", icon: FiMinus},
