@@ -8,8 +8,8 @@ import {
 import { type Actions, isElementType ,type ScaleType} from "../type";
 import Element from "./element";
 import rough from "roughjs";
-import { Hover, HoverOverSelectedElements, HoverOverSelectionBorder } from "./hover";
-import { selectionCollision } from "./collision";
+import { Hover, HoverOverSelectedElements,HoverOverAllElements, HoverOverSelectionBorder } from "./hover";
+import { pointElementCollision, selectionCollision } from "./collision";
 import { groupSelection } from "./draw";
 type CanvasProps = {
   currentTool: string;
@@ -33,10 +33,10 @@ export default function Canvas({
   setStyleUpdate
 }: CanvasProps) {
   const CanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const InputRef = useRef<HTMLInputElement | null>(null);
+  // const InputRef = useRef<HTMLInputElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [action, setAction] = useState<Actions>("IDLE");
-  const [scaleType,setScaleType] = useState<ScaleType>(null)
+  const [scaleType,setScaleType] = useState<ScaleType|'rotate'>(null)
   const [draftElement, setDraftElement] = useState<Element | null>(null);
   const [selectionArea, setSelectionArea] = useState({
     x1: 0,
@@ -49,7 +49,7 @@ export default function Canvas({
   const [text,setText]=useState("");
   const [lastCoords, setLastCoords] = useState({ x: 0, y: 0 });
   const [textCoords, setTextCoords] = useState({ x: 0, y: 0 });
-
+  const [trashElement,setTrashElement]=useState<string[]>([])
   function drawCanvas(
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
@@ -111,6 +111,7 @@ export default function Canvas({
       elements,
       selectedElements,
     );
+    
     const hoverSelectionBorder = HoverOverSelectionBorder(x,y,selectedElements,CanvasRef.current)
     if(currentTool==='text'&&action==='WRITING'&&text.length>0){
       const textElement=  new Element(textCoords.x,textCoords.y,textCoords.x+200,textCoords.y+50, currentTool, rough.canvas(CanvasRef.current),ctxRef.current)
@@ -120,6 +121,12 @@ export default function Canvas({
      setText("")
      setAction("IDLE")
      redraw()
+     return;
+    }
+    if(currentTool==='trash'){
+      //
+     CanvasRef.current.style.cursor='cell'
+     setAction("DELETING")
      return;
     }
     if (currentTool!=='text'&&isElementType(currentTool) && CanvasRef.current) {
@@ -151,17 +158,34 @@ export default function Canvas({
       } else if (!el && action) {
         setAction("SELECTING");
         setSelectionArea({ x1: x, y1: y, x2: x, y2: y, width: 0, height: 0 });
-      } else if (!el) {
-        //
       }
     }
     setLastCoords({ x, y });
   }
 
   function MouseMove(e: MouseEvent<HTMLCanvasElement>) {
-    if (!CanvasRef.current) return;
+    if (!CanvasRef.current||!ctxRef.current) return;
     const { x, y } = getCanvasCoord(e);
     Hover(x, y, action, CanvasRef.current, elements, selectedElements);
+    if(currentTool==='trash'){
+     CanvasRef.current.style.cursor='cell'
+    }
+    if(action==='DELETING'){
+      const arr:string[] = []
+      elements.forEach((el) => {
+        if(pointElementCollision(x,y,el)){
+          arr.push(el.id)
+          el.style.opacity = 0.5
+        }
+      });
+  ctxRef.current.fillStyle = "white";
+  ctxRef.current.beginPath();
+  ctxRef.current.arc(x, y, 7, 0, Math.PI * 2);
+  ctxRef.current.fill();
+      setTrashElement(arr)
+      redraw();
+      return;
+    }
     if (action === "DRAWING" && draftElement) {
       draftElement.updateDraftCoords(x, y);
       redraw();
@@ -179,7 +203,7 @@ export default function Canvas({
       }else if(action==='MOVING'){
         selectedElements.forEach((element) => element.move(x,y,lastCoords));
         redraw();
-      }else if (action==='SCALING'&&scaleType){
+      }else if (action==='SCALING'&&scaleType&&scaleType!=='rotate'){
         selectedElements.forEach((element) => element.scale(x,y,lastCoords,scaleType));
         redraw();
       }else if (action==='ROTATING'){
@@ -200,8 +224,18 @@ export default function Canvas({
     setSelectedElements(e);
   }
 
-  function MouseUp() {
-    // const { x, y } = getCanvasCoord(e);
+  function MouseUp(e: MouseEvent<HTMLCanvasElement>) {
+    if(!CanvasRef.current)return;
+    const { x, y } = getCanvasCoord(e);
+
+    const el = HoverOverAllElements(x,y,elements,CanvasRef.current);
+    if(action==='DELETING'){
+      const els = elements.filter((el)=>trashElement.some((tel)=>el.id!==tel))
+      setElements(els)
+      setAction('IDLE')
+      redraw();
+      return;
+    }
     if (action === "DRAWING" && draftElement) {
       setElements([...elements, draftElement]);
       setDraftElement(null);
@@ -220,6 +254,9 @@ export default function Canvas({
       }else if (action === 'SCALING'||action==='ROTATING'){
         setAction("SELECTED")
         setScaleType(null)
+      }else if(el){
+        setSelectedElements([el])
+        setAction("SELECTED")
       }
     }
   }
@@ -231,9 +268,6 @@ export default function Canvas({
     setTextCoords({x,y});
   }
 
-  function handleBlur(){
-
-  }
 
   useEffect(() => {
     redraw();
@@ -253,7 +287,6 @@ export default function Canvas({
     <>
      {action === "WRITING" ? (
         <input
-          onBlur={handleBlur}
           className="textArea"
           style={{top:textCoords.y,left:textCoords.x}}
           onChange={(e)=>{setText(e.target.value)}}

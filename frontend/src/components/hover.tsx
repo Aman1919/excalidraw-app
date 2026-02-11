@@ -7,7 +7,7 @@ export function  Hover(x:number,y:number,action:Actions,canvas:HTMLCanvasElement
 if(['MOVING','SCALING',"ROTATING","SELECTING"].includes(action))return
     const nonSelectedElement = HoverOverAllElements(x,y,elements,canvas)
     const SelectedElements = HoverOverSelectedElements(x,y,selectedElements)
-    const selectionBorder = HoverOverSelectionBorder(x,y,elements,canvas);
+    const selectionBorder = (selectedElements.length>0)?HoverOverSelectionBorder(x,y,elements,canvas):false;
     if(SelectedElements){
         canvas.style.cursor = 'move'
         return SelectedElements
@@ -23,7 +23,7 @@ if(['MOVING','SCALING',"ROTATING","SELECTING"].includes(action))return
   }
 
 
-function HoverOverAllElements(x:number,y:number,elements:Element[],canvas:HTMLCanvasElement) {
+export function HoverOverAllElements(x:number,y:number,elements:Element[],canvas:HTMLCanvasElement) {
         const  a = elements.find((element)=>{
             if(pointElementCollision(x,y,element)){
                 return element;

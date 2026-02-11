@@ -1,5 +1,4 @@
 import {
-  FiLock,
   FiMousePointer,
   FiSquare,
   FiCircle,
@@ -7,12 +6,9 @@ import {
   FiMinus,
   FiEdit2,
   FiType,
-  FiImage,
   FiTrash2
 } from "react-icons/fi";
 
-import { BsDiamond } from "react-icons/bs";
-import { FaHandPaper } from "react-icons/fa";
 
 type ToolBarProps = {
   currentTool:string,
@@ -21,16 +17,12 @@ type ToolBarProps = {
 
 export default function ToolBar({ setCurrentTool,currentTool }: ToolBarProps) {
    const tools = [
-  { name: "lock", icon: FiLock},
-  { name: "hand", icon: FaHandPaper},
   { name: "select", icon: FiMousePointer},
   { name: "rect", icon: FiSquare},
   { name: "circle", icon: FiCircle},
-  { name: "diamond", icon: BsDiamond},
   { name: "line", icon: FiMinus},
   { name: "arrow-line", icon: FiArrowRight},
   { name: "pencil", icon: FiEdit2},
-  { name: "image", icon: FiImage},
   { name: "text", icon: FiType },
   { name: "trash", icon: FiTrash2 },
 ];

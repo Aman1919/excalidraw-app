@@ -13,16 +13,20 @@ switch (type) {
          rctx.rectangle(x1, y1, width, height, style);
         break;
     case  'circle':
-         rctx.ellipse(x1, y1, width, height, style)    
+         rctx.ellipse(x1+width/2, y1+height/2, width, height, style)    
         break;
     case  'text':
     ctx.font = `${style.fontSize ?? 16}px ${style.fontFamily ?? 'serif'}`;
-
 ctx.fillStyle = style.stroke ?? "white";
 ctx.textAlign = style.textAlign ?? "left";
 ctx.textBaseline = 'middle';
-ctx.fillText(text, x1, y1);
+ctx.fillText(text, x1+width/4, y1+height/2);
 break;    
+case "arrow-line":
+         rctx.line(x1,y1,x2,y2,style)    
+         rctx.line(x2,y2,x2-10,y2-10,style)    
+         rctx.line(x2,y2,x2-10,y2+10,style)    
+    break;
       default:
         break;
     }    

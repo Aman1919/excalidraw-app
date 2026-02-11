@@ -30,10 +30,11 @@ export type Actions =
   | "SCALING"
   | "ROTATING"
   | "WRITING"
+  | "DELETING"
 
-export type ElementType = 'line' | "rect" | "circle" | "text"
+export type ElementType = 'line' | "rect" | "circle" | "text" | "arrow-line"
 
-const elementTypes = ["line", "rect", "circle",'text'] as const;
+const elementTypes = ["line", "rect", "circle",'text','arrow-line'] as const;
 
 export function isElementType(tool: string): tool is ElementType {
   return elementTypes.includes(tool as ElementType);

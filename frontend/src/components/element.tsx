@@ -38,7 +38,7 @@ export default class Element {
 
     this.id = crypto.randomUUID();
     this.style = {
-  stroke: "#000000",
+  stroke: "white",
   strokeWidth: 2,
   strokeStyle: "solid",
   fill: null, 
@@ -75,6 +75,18 @@ export default class Element {
   ) {
     const dx = x - lastCoords.x;
     const dy = y - lastCoords.y;
+    
+    if (this.type === "text") {
+  const scaleFactor = 0.1; // sensitivity
+
+  if (!this.style.fontSize) this.style.fontSize = 16;
+
+  this.style.fontSize = Math.max(
+    6,
+    this.style.fontSize + dy * scaleFactor
+  );
+}
+
     switch (type) {
       case "left":
         this.x1 += dx;

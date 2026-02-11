@@ -134,8 +134,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       {children}
     </div>
   );
-}
-
+  }
 function ColorRow({ colors, active, onSelect }: { colors: string[]; active: string; onSelect: (c: string) => void }) {
   const customColorRef = useRef<HTMLInputElement>(null);
 
