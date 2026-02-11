@@ -13,11 +13,13 @@ import { selectionCollision } from "./collision";
 import { groupSelection } from "./draw";
 type CanvasProps = {
   currentTool: string;
-  setCurrentTool: (tool: string) => void;
+  setCurrentTool: React.Dispatch<React.SetStateAction<string>>;
   selectedElements: Element[];
-  setSelectedElements: (el: Element[]) => void;
+  setSelectedElements: React.Dispatch<React.SetStateAction<Element[]>>;
   elements: Element[];
-  setElements: (el: Element[]) => void;
+  setElements: React.Dispatch<React.SetStateAction<Element[]>>;
+  setStyleUpdate: React.Dispatch<React.SetStateAction<boolean>>;
+  styleUpdate:boolean;
 };
 
 export default function Canvas({
@@ -26,9 +28,12 @@ export default function Canvas({
   selectedElements,
   elements,
   setElements,
+  styleUpdate,
   setSelectedElements,
+  setStyleUpdate
 }: CanvasProps) {
   const CanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const InputRef = useRef<HTMLInputElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [action, setAction] = useState<Actions>("IDLE");
   const [scaleType,setScaleType] = useState<ScaleType>(null)
@@ -41,7 +46,9 @@ export default function Canvas({
     width: 0,
     height: 0,
   });
+  const [text,setText]=useState("");
   const [lastCoords, setLastCoords] = useState({ x: 0, y: 0 });
+  const [textCoords, setTextCoords] = useState({ x: 0, y: 0 });
 
   function drawCanvas(
     canvas: HTMLCanvasElement,
@@ -105,7 +112,17 @@ export default function Canvas({
       selectedElements,
     );
     const hoverSelectionBorder = HoverOverSelectionBorder(x,y,selectedElements,CanvasRef.current)
-    if (isElementType(currentTool) && CanvasRef.current) {
+    if(currentTool==='text'&&action==='WRITING'&&text.length>0){
+      const textElement=  new Element(textCoords.x,textCoords.y,textCoords.x+200,textCoords.y+50, currentTool, rough.canvas(CanvasRef.current),ctxRef.current)
+      textElement.setText(text)
+     setElements([...elements,textElement])
+     setTextCoords({x:0,y:0});
+     setText("")
+     setAction("IDLE")
+     redraw()
+     return;
+    }
+    if (currentTool!=='text'&&isElementType(currentTool) && CanvasRef.current) {
       setDraftElement(
         new Element(x, y, x, y, currentTool, rough.canvas(CanvasRef.current),ctxRef.current),
       );
@@ -125,11 +142,16 @@ export default function Canvas({
             setAction('ROTATING')
             setScaleType(hoverSelectionBorder.message)
           }
+        }else if (!el){
+          //clicked outside the selected element
+        setAction("IDLE");
+        setSelectedElements([])
+        setSelectionArea({x1: 0,y1: 0,x2: 0,y2: 0,width: 0,height: 0})
         }
       } else if (!el && action) {
         setAction("SELECTING");
         setSelectionArea({ x1: x, y1: y, x2: x, y2: y, width: 0, height: 0 });
-      } else if (el) {
+      } else if (!el) {
         //
       }
     }
@@ -202,9 +224,20 @@ export default function Canvas({
     }
   }
 
+  function doubleClick(e: MouseEvent<HTMLCanvasElement>){
+    if(currentTool!=='text')return;
+    const {x,y}= getCanvasCoord(e);
+    setAction('WRITING')
+    setTextCoords({x,y});
+  }
+
+  function handleBlur(){
+
+  }
+
   useEffect(() => {
     redraw();
-  }, [elements, draftElement, selectionArea, action, selectedElements]);
+  }, [elements, draftElement, selectionArea, action, selectedElements,styleUpdate]);
 
   function getCanvasCoord(e: MouseEvent<HTMLCanvasElement>) {
     if (!CanvasRef.current) return { x: 0, y: 0 };
@@ -214,12 +247,26 @@ export default function Canvas({
     return { x, y };
   }
 
+  
+
   return (
+    <>
+     {action === "WRITING" ? (
+        <input
+          onBlur={handleBlur}
+          className="textArea"
+          style={{top:textCoords.y,left:textCoords.x}}
+          onChange={(e)=>{setText(e.target.value)}}
+        />
+      ) : null}
     <canvas
       ref={CanvasRef}
       onMouseDown={MouseDown}
       onMouseMove={MouseMove}
       onMouseUp={MouseUp}
-    ></canvas>
+      onDoubleClick={doubleClick}
+      ></canvas>
+      
+      </>
   );
 }

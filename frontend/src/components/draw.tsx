@@ -3,8 +3,8 @@ import type { Area } from "../type";
 import { min_max_x_y } from "./collision";
 import Element from "./element";
 
-export function drawElement(element:Element,rctx:any){
-        const {x1,y1,width,height,x2,y2,type,style}= element
+export function drawElement(element:Element,rctx:any,ctx:CanvasRenderingContext2D){
+        const {x1,y1,width,height,x2,y2,type,style,text}= element
 switch (type) {
       case 'line':
          rctx.line(x1,y1,x2,y2,style)    
@@ -15,6 +15,14 @@ switch (type) {
     case  'circle':
          rctx.ellipse(x1, y1, width, height, style)    
         break;
+    case  'text':
+    ctx.font = `${style.fontSize ?? 16}px ${style.fontFamily ?? 'serif'}`;
+
+ctx.fillStyle = style.stroke ?? "white";
+ctx.textAlign = style.textAlign ?? "left";
+ctx.textBaseline = 'middle';
+ctx.fillText(text, x1, y1);
+break;    
       default:
         break;
     }    

@@ -1,4 +1,4 @@
-import {type Actions, type scaleType} from "../type"
+import {type Actions, type ScaleType} from "../type"
 import {pointElementCollision,min_max_x_y} from "./collision"
 import Element from "./element"
 
@@ -39,7 +39,7 @@ function HoverOverAllElements(x:number,y:number,elements:Element[],canvas:HTMLCa
 }
 
 
- export function  HoverOverSelectionBorder(x:number,y:number,selectedElements:Element[],canvas:HTMLCanvasElement):{message:scaleType | 'rotate',type:string}| null{
+ export function  HoverOverSelectionBorder(x:number,y:number,selectedElements:Element[],canvas:HTMLCanvasElement):{message:ScaleType | 'rotate',type:string}| null{
       const { min_x, min_y, max_x, max_y } = min_max_x_y(selectedElements);
   
     const selectionBorder = {
@@ -54,17 +54,17 @@ function HoverOverAllElements(x:number,y:number,elements:Element[],canvas:HTMLCa
 const EDGE = 6;
 const { x1, x2, y1, y2 } = selectionBorder;
 
-const widthEdges: { name: scaleType; x1: number; y1: number; x2: number; y2: number }[] = [
+const widthEdges: { name: ScaleType; x1: number; y1: number; x2: number; y2: number }[] = [
   { name: "top", x1, y1: y1 - EDGE, x2, y2: y1 + EDGE },
   { name: "bottom", x1, y1: y2 - EDGE, x2, y2: y2 + EDGE },
 ];
 
-const heightEdges: { name: scaleType; x1: number; y1: number; x2: number; y2: number }[] = [
+const heightEdges: { name: ScaleType; x1: number; y1: number; x2: number; y2: number }[] = [
   { name: "left", x1: x1 - EDGE, y1, x2: x1 + EDGE, y2 },
   { name: "right", x1: x2 - EDGE, y1, x2: x2 + EDGE, y2 },
 ];
 
-const cornerCircles: { name: scaleType; x: number; y: number }[] = [
+const cornerCircles: { name: ScaleType; x: number; y: number }[] = [
   { name: "tl", x: x1, y: y1 },
   { name: "tr", x: x2, y: y1 },
   { name: "bl", x: x1, y: y2 },

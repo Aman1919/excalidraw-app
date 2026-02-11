@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { ElementType, ScaleType } from "../type";
+import type { ElementType, ScaleType,Style } from "../type";
 import { drawElement } from "./draw";
 
 export default class Element {
@@ -14,12 +14,8 @@ export default class Element {
   ctx:CanvasRenderingContext2D;
   width: number;
   height: number;
-
-  style = {
-    stroke: "white",
-    strokeWidth: 1,
-  };
-
+  text:string = "";
+  style :Style;
   constructor(
     x1: number,
     y1: number,
@@ -41,10 +37,25 @@ export default class Element {
     this.ctx = ctx
 
     this.id = crypto.randomUUID();
+    this.style = {
+  stroke: "#000000",
+  strokeWidth: 2,
+  strokeStyle: "solid",
+  fill: null, 
+  opacity: 1,
+  fontSize: 30,
+  fontFamily: "Inter, sans-serif",
+  textAlign: "left",
+};
   }
 
+  setText(t:string){
+    if(this.type!=='text')return;
+    this.text= t;
+  }
+  
   draw() {
-    drawElement(this, this.rctx);
+    drawElement(this, this.rctx,this.ctx);
   }
 
   move(x1: number, y1: number, lastCoords: { x: number; y: number }) {
