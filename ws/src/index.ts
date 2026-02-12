@@ -1,31 +1,30 @@
-import WebSocket, { WebSocketServer } from "ws";
+import  {WebSocket, WebSocketServer } from "ws";
+import Room from "./Rooms";
 
 const wss = new WebSocketServer({ port: 8080 });
-const rooms = []
-wss.on("connection", (ws) => {
+
+const rooms = new Room();
+
+wss.on("connection", (ws,req) => {
   console.log("Client connected");
+const params = new URLSearchParams(req.url?.split('?')[1]);
+const groupId = params.get('groupId');
+const username = createRandomUsernames();
+const canvas = params.get('canvas')||"";
 
-  ws.on("message", (data) => {
-    console.log("received:", data.toString());
-
-    // broadcast
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(data.toString());
-      }
-    });
-  });
+rooms.handleConnection(groupId,ws,username,canvas)
+  
 
   ws.send("Hello from server");
 });
 
-/**
- * in coballoration feature 
- * we colaborating with multiple people
- * when user clicka start colab it creates a rooms and give the user a rooms link 
- * where multiple people can join and colal with drawing 
- * first it will the the drawing data to room owner and it will share it with others as well 
- * coverting drawing data to string 
- */
+
+function createRandomUsernames(){
+  const adjectives = ["Swift", "Brave", "Clever", "Mighty", "Gentle"];
+  const animals = ["Lion", "Eagle", "Shark", "Wolf", "Panther"];
+  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const animal = animals[Math.floor(Math.random() * animals.length)];
+  return `${adjective}${animal}`;
+}
 
 console.log("WS server running on ws://localhost:8080");
