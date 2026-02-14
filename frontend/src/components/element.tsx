@@ -1,154 +1,149 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ElementType, ScaleType, Element } from "../type";
 
-import type { ElementType, ScaleType,Style } from "../type";
-import { drawElement } from "./draw";
-
-export default class Element {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  type: ElementType;
-  id: string;
-  rctx: any;
-  ctx:CanvasRenderingContext2D;
-  width: number;
-  height: number;
-  text:string = "";
-  style :Style;
-  constructor(
-    x1: number,
-    y1: number,
-    x2: number,
-    y2: number,
-    type: ElementType,
-    rctx: any,
-    ctx:CanvasRenderingContext2D
-  ) {
-    this.x1 = x1;
-    this.y1 = y1;
-    this.x2 = x2;
-    this.y2 = y2;
-    this.type = type;
-    this.rctx = rctx;
-
-    this.width = x2 - x1;
-    this.height = y2 - y1;
-    this.ctx = ctx
-
-    this.id = crypto.randomUUID();
-    this.style = {
-  stroke: "white",
-  strokeWidth: 2,
-  strokeStyle: "solid",
-  fill: null, 
-  opacity: 1,
-  fontSize: 30,
-  fontFamily: "Inter, sans-serif",
-  textAlign: "left",
-};
-  }
-
-  setText(t:string){
-    if(this.type!=='text')return;
-    this.text= t;
-  }
-  
-  draw() {
-    drawElement(this, this.rctx,this.ctx);
-  }
-
-  move(x1: number, y1: number, lastCoords: { x: number; y: number }) {
-    const dx = x1 - lastCoords.x;
-    const dy = y1 - lastCoords.y;
-    this.x1 += dx;
-    this.y1 += dy;
-    this.x2 += dx;
-    this.y2 += dy;
-  }
-
-  scale(
-    x: number,
-    y: number,
-    lastCoords: { x: number; y: number },
-    type: ScaleType,
-  ) {
-    const dx = x - lastCoords.x;
-    const dy = y - lastCoords.y;
-    
-    if (this.type === "text") {
-  const scaleFactor = 0.1; // sensitivity
-
-  if (!this.style.fontSize) this.style.fontSize = 16;
-
-  this.style.fontSize = Math.max(
-    6,
-    this.style.fontSize + dy * scaleFactor
-  );
+export function createElement(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  type: ElementType
+):Element {
+  return {
+    id: crypto.randomUUID(),
+    type,
+    x1,
+    y1,
+    x2,
+    y2,
+    width: x2 - x1,
+    height: y2 - y1,
+    text: "",
+    style: {
+      stroke: "white",
+      strokeWidth: 2,
+      strokeStyle: "solid",
+      fill: null,
+      opacity: 1,
+      fontSize: 30,
+      fontFamily: "Inter, sans-serif",
+      textAlign: "left",
+    },
+  };
 }
 
-    switch (type) {
-      case "left":
-        this.x1 += dx;
-        this.width = this.x2 - this.x1;
-        break;
-      case "right":
-        this.x2 += dx;
-        this.width = this.x2 - this.x1;
-        break;
-      case "top":
-        this.y1 += dy;
-        this.height = this.y2 - this.y1;
-        break;
-      case "bottom":
-        this.y2 += dy;
-        this.height = this.y2 - this.y1;
-        break;
-      case "tr":
-        this.x2 += dx;
-        this.width = this.x2 - this.x1;
-        this.y1 += dy;
-        this.height = this.y2 - this.y1;
-        break;
-      case "tl":
-        this.x1 += dx;
-        this.width = this.x2 - this.x1;
-        this.y1 += dy;
-        this.height = this.y2 - this.y1;
-        break;
-      case "br":
-        this.x2 += dx;
-        this.width = this.x2 - this.x1;
-        this.y2 += dy;
-        this.height = this.y2 - this.y1;
-        break;
-      case "bl":
-        this.x1 += dx;
-        this.width = this.x2 - this.x1;
-        this.y2 += dy;
-        this.height = this.y2 - this.y1;
-        break;
+export function setText(el: Element, text: string): Element {
+  if (el.type !== "text") return el;
 
-      default:
-        break;
-    }
+  return {
+    ...el,
+    text,
+  };
+}
+
+
+export function moveElement(
+  el: Element,
+  x: number,
+  y: number,
+  last: { x: number; y: number }
+): Element {
+  const dx = x - last.x;
+  const dy = y - last.y;
+
+  return {
+    ...el,
+    x1: el.x1 + dx,
+    y1: el.y1 + dy,
+    x2: el.x2 + dx,
+    y2: el.y2 + dy,
+  };
+}
+
+export function updateDraftCoords(
+  el: Element,
+  x: number,
+  y: number
+): Element {
+  return {
+    ...el,
+    x2: x,
+    y2: y,
+    width: x - el.x1,
+    height: y - el.y1,
+  };
+}
+
+// export function rotateElement(
+//   el: Element,
+//   x: number,
+//   y: number,
+//   last: { x: number; y: number },
+//   handle: ScaleType
+// ): Element {
+// console.log(x,y,last,handle,el)
+// return el
+// }
+
+
+export function scaleElement(
+  el: Element,
+  x: number,
+  y: number,
+  last: { x: number; y: number },
+  handle: ScaleType
+): Element {
+  const dx = x - last.x;
+  const dy = y - last.y;
+
+  let next = { ...el };
+
+  // text scaling
+  if (el.type === "text") {
+    next = {
+      ...next,
+      style: {
+        ...next.style,
+        fontSize: Math.max(
+          6,
+          (next.style.fontSize ?? 16) + dy * 0.1
+        ),
+      },
+    };
   }
 
-  rotate(x: number, y: number, lastCoords: { x: number; y: number }) {
-    console.log(x, y, lastCoords);
-// const centerX = x - Math.abs((this.x1+this.x2)/2)
-// const centerY = y- Math.abs((this.y1+this.y2)/2)
-//   const angle = Math.atan2(y - centerY,centerY);
-//   this.ctx.translate(centerX, centerY);
-//   this.ctx.rotate(angle);
-//    this.ctx.restore();
-
+  switch (handle) {
+    case "left":
+      next.x1 += dx;
+      break;
+    case "right":
+      next.x2 += dx;
+      break;
+    case "top":
+      next.y1 += dy;
+      break;
+    case "bottom":
+      next.y2 += dy;
+      break;
+    case "tr":
+      next.x2 += dx;
+      next.y1 += dy;
+      break;
+    case "tl":
+      next.x1 += dx;
+      next.y1 += dy;
+      break;
+    case "br":
+      next.x2 += dx;
+      next.y2 += dy;
+      break;
+    case "bl":
+      next.x1 += dx;
+      next.y2 += dy;
+      break;
   }
 
-  updateDraftCoords(x: number, y: number) {
-    this.x2 = x;
-    this.y2 = y;
-    this.width = x - this.x1;
-    this.height = y - this.y1;
-  }
+  return {
+    ...next,
+    width: next.x2 - next.x1,
+    height: next.y2 - next.y1,
+  };
 }

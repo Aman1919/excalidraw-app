@@ -8,15 +8,19 @@ import {
   FiType,
   FiTrash2
 } from "react-icons/fi";
+import { currentToolState ,selectedElementState} from "../atoms";
+import { useRecoilState } from "recoil";
+import type { IconType } from "react-icons";
+import type { CurrentTool } from "../type";
+import { useEffect } from "react";
 
 
-type ToolBarProps = {
-  currentTool:string,
-  setCurrentTool: (tool: string) => void;
-};
 
-export default function ToolBar({ setCurrentTool,currentTool }: ToolBarProps) {
-   const tools = [
+export default function ToolBar() {
+    const [currentTool,setCurrentTool] = useRecoilState(currentToolState);
+    const setSelectedElements = useRecoilState(selectedElementState)[1];
+  
+   const tools:{name:CurrentTool,icon:IconType}[] = [
   { name: "select", icon: FiMousePointer},
   { name: "rect", icon: FiSquare},
   { name: "circle", icon: FiCircle},
@@ -27,9 +31,15 @@ export default function ToolBar({ setCurrentTool,currentTool }: ToolBarProps) {
   { name: "trash", icon: FiTrash2 },
 ];
 
-function handle(toolname:string) {
+function handle(toolname:CurrentTool) {
     setCurrentTool(toolname);
 }
+
+useEffect(()=>{
+  if(currentTool!=='select'){
+    setSelectedElements([])
+  }
+},[currentTool, setSelectedElements])
 
     return <nav className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
       <div

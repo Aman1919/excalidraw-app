@@ -1,4 +1,4 @@
-import Element from "./element"
+import {type Element} from "../type"
 import {type Area} from "../type"
 
 export function pointElementCollision(x:number,y:number,shape:Element){

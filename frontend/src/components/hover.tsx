@@ -1,6 +1,5 @@
-import {type Actions, type ScaleType} from "../type"
+import type{Element, Actions, ScaleType} from "../type"
 import {pointElementCollision,min_max_x_y} from "./collision"
-import Element from "./element"
 
 
 export function  Hover(x:number,y:number,action:Actions,canvas:HTMLCanvasElement,elements:Element[],selectedElements:Element[]){

@@ -5,39 +5,28 @@ import {
   type MouseEvent,
   useLayoutEffect,
 } from "react";
-import { type Actions, isElementType ,type ScaleType} from "../type";
-import Element from "./element";
+import { type Actions, isElementType ,type Element} from "../type";
+import {createElement, moveElement, scaleElement, updateDraftCoords} from "./element";
 import rough from "roughjs";
 import { Hover, HoverOverSelectedElements,HoverOverAllElements, HoverOverSelectionBorder } from "./hover";
 import { pointElementCollision, selectionCollision } from "./collision";
-import { groupSelection } from "./draw";
-type CanvasProps = {
-  currentTool: string;
-  setCurrentTool: React.Dispatch<React.SetStateAction<string>>;
-  selectedElements: Element[];
-  setSelectedElements: React.Dispatch<React.SetStateAction<Element[]>>;
-  elements: Element[];
-  setElements: React.Dispatch<React.SetStateAction<Element[]>>;
-  setStyleUpdate: React.Dispatch<React.SetStateAction<boolean>>;
-  styleUpdate:boolean;
-};
+import { drawElement, groupSelection } from "./draw";
+import { useRecoilValue, useRecoilState } from "recoil";
+import { elementState, selectedElementState, currentToolState ,styleUpdateState, scaleTypeState, groupIdState} from "../atoms/index.tsx";
+import useWS from "./ws.tsx";
 
-export default function Canvas({
-  currentTool,
-  setCurrentTool,
-  selectedElements,
-  elements,
-  setElements,
-  styleUpdate,
-  setSelectedElements,
-  setStyleUpdate
-}: CanvasProps) {
+
+export default function Canvas() {
   const CanvasRef = useRef<HTMLCanvasElement | null>(null);
-  // const InputRef = useRef<HTMLInputElement | null>(null);
+  const [elements, setElements] = useRecoilState(elementState);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const [selectedElements, setSelectedElements] = useRecoilState(selectedElementState);
+  const [currentTool,setCurrentTool] = useRecoilState(currentToolState);
   const [action, setAction] = useState<Actions>("IDLE");
-  const [scaleType,setScaleType] = useState<ScaleType|'rotate'>(null)
+  const [scaleType,setScaleType] = useRecoilState(scaleTypeState)
   const [draftElement, setDraftElement] = useState<Element | null>(null);
+  const styleUpdate = useRecoilValue(styleUpdateState)
+  const groupId = useRecoilValue(groupIdState)
   const [selectionArea, setSelectionArea] = useState({
     x1: 0,
     y1: 0,
@@ -50,6 +39,8 @@ export default function Canvas({
   const [lastCoords, setLastCoords] = useState({ x: 0, y: 0 });
   const [textCoords, setTextCoords] = useState({ x: 0, y: 0 });
   const [trashElement,setTrashElement]=useState<string[]>([])
+  const {send}=useWS()
+
   function drawCanvas(
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
@@ -67,7 +58,11 @@ export default function Canvas({
     if (!ctx) return;
     ctxRef.current = ctx;
     drawCanvas(canvas, ctx);
-  }, [CanvasRef]);
+    const elements = localStorage.getItem("elements");
+    if (elements) {
+      setElements(JSON.parse(elements));
+    }
+  }, [CanvasRef, setElements]);
 
   function redraw() {
     const canvas = CanvasRef.current;
@@ -78,8 +73,9 @@ export default function Canvas({
     ctx.fillStyle = "#1d1d24";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const rctx = rough.canvas(canvas);
-    elements.forEach((el) => el.draw());
-    draftElement?.draw();
+
+    elements.forEach((el) => drawElement(el, rctx, ctx));
+    if(draftElement)drawElement(draftElement, rctx, ctx)
     if (currentTool === "select" && action === "SELECTING") {
       const selectionState = {
         roughness: 0.5,
@@ -95,8 +91,12 @@ export default function Canvas({
         selectionState,
       );
     }
-
-    groupSelection(rctx, selectedElements);
+    groupSelection(rctx, getSelectedElement());
+  }
+ 
+  function getSelectedElement(){
+   const sEl = elements.filter((el) => selectedElements.includes(el.id));
+    return sEl;
   }
 
   function MouseDown(e: MouseEvent<HTMLCanvasElement>) {
@@ -109,13 +109,13 @@ export default function Canvas({
       action,
       CanvasRef.current,
       elements,
-      selectedElements,
+      getSelectedElement(),
     );
     
-    const hoverSelectionBorder = HoverOverSelectionBorder(x,y,selectedElements,CanvasRef.current)
+    const hoverSelectionBorder = HoverOverSelectionBorder(x,y,getSelectedElement(),CanvasRef.current)
     if(currentTool==='text'&&action==='WRITING'&&text.length>0){
-      const textElement=  new Element(textCoords.x,textCoords.y,textCoords.x+200,textCoords.y+50, currentTool, rough.canvas(CanvasRef.current),ctxRef.current)
-      textElement.setText(text)
+      const textElement=  createElement(x,y,x,y,"text")
+      setText(text)
      setElements([...elements,textElement])
      setTextCoords({x:0,y:0});
      setText("")
@@ -125,21 +125,22 @@ export default function Canvas({
     }
     if(currentTool==='trash'){
       //
+
+          setSelectedElements([])
+        setSelectionArea({x1: 0,y1: 0,x2: 0,y2: 0,width: 0,height: 0})
      CanvasRef.current.style.cursor='cell'
      setAction("DELETING")
      return;
     }
     if (currentTool!=='text'&&isElementType(currentTool) && CanvasRef.current) {
-      setDraftElement(
-        new Element(x, y, x, y, currentTool, rough.canvas(CanvasRef.current),ctxRef.current),
-      );
+      setDraftElement(createElement(x, y, x, y, currentTool));
       setAction("DRAWING");
       return;
     }
     if (currentTool === "select") {
       console.log(el);
       if (action == "SELECTED") {
-        if (HoverOverSelectedElements(x, y, selectedElements)) {
+        if (HoverOverSelectedElements(x, y, getSelectedElement())) {
           setAction("MOVING");
         }else if(hoverSelectionBorder){
           if(hoverSelectionBorder.message!=='rotate'){
@@ -165,8 +166,10 @@ export default function Canvas({
 
   function MouseMove(e: MouseEvent<HTMLCanvasElement>) {
     if (!CanvasRef.current||!ctxRef.current) return;
+    
     const { x, y } = getCanvasCoord(e);
-    Hover(x, y, action, CanvasRef.current, elements, selectedElements);
+    send({type:"cursor-move",x,y,groupId})
+    Hover(x, y, action, CanvasRef.current, elements, getSelectedElement());
     if(currentTool==='trash'){
      CanvasRef.current.style.cursor='cell'
     }
@@ -175,7 +178,6 @@ export default function Canvas({
       elements.forEach((el) => {
         if(pointElementCollision(x,y,el)){
           arr.push(el.id)
-          el.style.opacity = 0.5
         }
       });
   ctxRef.current.fillStyle = "white";
@@ -187,7 +189,7 @@ export default function Canvas({
       return;
     }
     if (action === "DRAWING" && draftElement) {
-      draftElement.updateDraftCoords(x, y);
+      setDraftElement(updateDraftCoords(draftElement, x, y));
       redraw();
     } else if (currentTool === "select") {
       if (action == "SELECTING") {
@@ -201,14 +203,14 @@ export default function Canvas({
         ScanElements();
         redraw();
       }else if(action==='MOVING'){
-        selectedElements.forEach((element) => element.move(x,y,lastCoords));
+        setElements((prev) =>prev.map((element)=> selectedElements.includes(element.id)?moveElement(element,x,y,lastCoords):element))
         redraw();
       }else if (action==='SCALING'&&scaleType&&scaleType!=='rotate'){
-        selectedElements.forEach((element) => element.scale(x,y,lastCoords,scaleType));
+        setElements((prev) =>prev.map((element)=> selectedElements.includes(element.id)?scaleElement(element,x,y,lastCoords,scaleType):element))
         redraw();
       }else if (action==='ROTATING'){
-        selectedElements.forEach((element) => element.rotate(x,y,lastCoords));
-        redraw();
+        // selectedElements.forEach((element) => rotateElement(element,x,y,lastCoords));
+        // redraw();
       }
     }
     setLastCoords({ x, y });
@@ -221,7 +223,7 @@ export default function Canvas({
         e.push(element);
       }
     }
-    setSelectedElements(e);
+    setSelectedElements(e.map((el) => el.id));
   }
 
   function MouseUp(e: MouseEvent<HTMLCanvasElement>) {
@@ -255,10 +257,11 @@ export default function Canvas({
         setAction("SELECTED")
         setScaleType(null)
       }else if(el){
-        setSelectedElements([el])
+        setSelectedElements([el.id])
         setAction("SELECTED")
       }
     }
+    localStorage.setItem("elements", JSON.stringify(elements));
   }
 
   function doubleClick(e: MouseEvent<HTMLCanvasElement>){
@@ -299,7 +302,6 @@ export default function Canvas({
       onMouseUp={MouseUp}
       onDoubleClick={doubleClick}
       ></canvas>
-      
       </>
   );
 }

@@ -41,4 +41,22 @@ export function isElementType(tool: string): tool is ElementType {
 }
 export type ScaleType = 'left'|'right'|'top'|'bottom'|'tr'|"tl"|'br'|'bl'|null
 
+export type CurrentTool = "select" | "line" | "rect" | "circle" | "text" | "arrow-line" | 'pencil' | "trash";
 
+export interface Element {
+  id: string;
+  type: ElementType;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  width: number;
+  height: number;
+  text: string;
+  style: Style;
+}
+export interface Collaborate {
+  username:string;
+  color:string;
+  mouseCoords:{x:number,y:number}
+}

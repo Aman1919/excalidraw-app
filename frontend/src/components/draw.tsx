@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Area } from "../type";
+import type { Area ,Element} from "../type";
 import { min_max_x_y } from "./collision";
-import Element from "./element";
 
 export function drawElement(element:Element,rctx:any,ctx:CanvasRenderingContext2D){
         const {x1,y1,width,height,x2,y2,type,style,text}= element

@@ -2,37 +2,48 @@ import { useState,useEffect } from 'react';
 import { Play, X, Users } from 'lucide-react';
 import { FaStop } from "react-icons/fa";
 import useWS from "./ws"
-// import Element from "./element"
-type CollaborationProps = {
-elements:string,
-setCollaborationData:(data:string)=>void,
-collaborationData:string,
-}
-export default function Collaboration({elements,collaborationData,setCollaborationData}:CollaborationProps) {
+import { elementState,groupIdState,isLiveState } from '../atoms';
+import { useRecoilState, useRecoilValue } from 'recoil';
+
+
+export default function Collaboration() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLive, setIsLive] = useState(false);
-  const {send} = useWS({isLive,canvasData:elements,setCollaborationData});
+  // const [collaborationData,setCollaborationData]=useState("")
+  const [groupId,setGroupId] = useRecoilState(groupIdState)
+  const [isLive, setIsLive] = useRecoilState(isLiveState);
+  const elements = useRecoilValue(elementState)
+  const {send} = useWS();
+
+
+useEffect(()=>{
+    const params = new URLSearchParams(window.location.search);
+  const id = params.get("groupId");
+
+  if (window.location.pathname === "/collaboration" && id) {
+    console.log("Valid collaboration page");
+    setIsLive('joined');
+    setGroupId(id);
+  }
+
+},[elements, isLive, setGroupId, setIsLive])
+
+
+
 
   const handleStartSession = () => {
     // 1. Generate your room ID or hit your backend here
     // const roomId = crypto.randomUUID();
     
-    setIsLive(true);
+    setIsLive('created');
     
     console.log("Live collaboration started...");
     // Logic to initialize WebSocket would go here
   };
 
-useEffect(()=>{
-  if(collaborationData){
-    // const data = JSON.parse(collaborationData)
-  }
-},[collaborationData])
 
  const handleStopSession  = ()=>{
     //close ws connection
     send({type:"end-session"})
-    setIsLive(false);
     setIsOpen(false);
  }
   return (
@@ -85,6 +96,43 @@ useEffect(()=>{
                 <FaStop/>
               <span className="font-bold text-[#1e1f2b]">stop session</span>
             </button>}
+
+
+
+{isLive && (
+  <div className="mt-6 p-5 rounded-xl bg-[#2a2b38]/80 border border-white/10 backdrop-blur-sm space-y-3">
+
+    <p className="text-white/70 text-sm">
+      Share this link to invite others
+    </p>
+
+    <div className="flex items-center gap-2">
+      <input
+        type="text"
+        readOnly
+        value={`${window.location.origin}/collaboration?groupId=${groupId}`}
+        className="flex-1 bg-[#1e1f2b] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 outline-none focus:ring-1 focus:ring-[#a5adff]"
+      />
+
+      <button
+        onClick={() =>
+          navigator.clipboard.writeText(
+            `${window.location.origin}/collaboration?groupId=${groupId}`
+          )
+        }
+        className="px-4 py-2 rounded-lg bg-[#a5adff] text-[#1e1f2b] font-medium text-sm hover:bg-[#949cff] active:scale-95 transition"
+      >
+        Copy
+      </button>
+    </div>
+
+    <p className="text-[11px] text-white/40">
+      Anyone with this link can join your session.
+    </p>
+  </div>
+)}
+
+
           </div>
         </div>
       )}

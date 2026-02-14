@@ -1,39 +1,37 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo, useRef } from "react";
-import Element from "./element";
 import type { Style } from "../type";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { elementState, selectedElementState, styleUpdateState } from "../atoms";
 
-type StyleBarProps = {
-  selectedElements: Element[];
-  setSelectedElements: React.Dispatch<React.SetStateAction<Element[]>>;
-  setStyleUpdate: React.Dispatch<React.SetStateAction<boolean>>;
-  styleUpdate:boolean;
-};
 
-export default function StyleBar({ selectedElements, setStyleUpdate ,styleUpdate}: StyleBarProps) {
+export default function StyleBar() {
+    const selectedElements = useRecoilValue(selectedElementState);
+    const [styleUpdate, setStyleUpdate] = useRecoilState(styleUpdateState);
+  const [elements, setElements] = useRecoilState(elementState);
+
   const selectionInfo = useMemo(() => {
     if (!selectedElements.length) return null;
+   const sEl = elements.filter((el) => selectedElements.includes(el.id));
 
-    const first = selectedElements[0];
-    const mixed = selectedElements.some((el) => el.type !== first.type);
+    const first = sEl[0];
+    const mixed = sEl.some((el) => el.type !== first.type);
 
     return {
       type: mixed ? "mixed" : first.type,
       style: first.style,
     };
-  }, [selectedElements,styleUpdate]);
+  }, [elements, selectedElements,styleUpdate]);
 
   const style = selectionInfo?.style;
   const selectionType = selectionInfo?.type;
 
   function updateStyle(patch: Partial<Style>) {
-    selectedElements.forEach((el) => {
-      el.style = { ...el.style, ...patch };
-    });
+    setElements((prev) => prev.map((el)=>selectedElements.includes(el.id)?{...el,style:{...el.style,...patch}}:el))
     setStyleUpdate((prev) => !prev);
   }
 
-  if (!style) return null;
+  if (!style||selectedElements.length===0) return null;
 
   return (
     <div className="absolute left-6 top-24 z-50">

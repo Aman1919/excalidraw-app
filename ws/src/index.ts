@@ -7,15 +7,11 @@ const rooms = new Room();
 
 wss.on("connection", (ws,req) => {
   console.log("Client connected");
-const params = new URLSearchParams(req.url?.split('?')[1]);
-const groupId = params.get('groupId');
-const username = createRandomUsernames();
-const canvas = params.get('canvas')||"";
 
-rooms.handleConnection(groupId,ws,username,canvas)
-  
+  ws.on("message",(message)=>{
+rooms.handleMessage(ws,message.toString())
+  })
 
-  ws.send("Hello from server");
 });
 
 
