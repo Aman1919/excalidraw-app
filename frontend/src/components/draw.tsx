@@ -31,8 +31,6 @@ case "arrow-line":
     }    
 }
 
-
-
 export function selectionRect(area:Area,rctx:any){
    const {x1,y1,width,height}= area
     rctx.rectangle(x1, y1, width, height,{roughness: 0.5, stroke: '#a8a5ff',fill:"rgba(168, 165, 255,0.5)", strokeWidth: 1 });
@@ -57,4 +55,3 @@ export function groupSelection(rctx: any,selectedElements:Element[]) {
     
     selectionBorder(min_x,max_x,min_y,max_y,rctx)
   }
-

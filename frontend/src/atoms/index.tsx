@@ -39,24 +39,4 @@ const collaboratorsState = atom<Collaborate[]>({
     default:[]
 })
 
-const updateCursorSelector = selectorFamily({
-  key: "updateCursor",
-  get: () => () => {},
-  set:
-    ({ username, x, y }:{username:string,x:number,y:number}) =>
-    ({ set, get }) => {
-      const users = get(collaboratorsState);
-
-      set(
-        collaboratorsState,
-        users.map(u =>
-          u.username === username
-            ? { ...u, x, y }
-            : u
-        )
-      );
-    }
-});
-
-
-export {elementState,selectedElementState,currentToolState,styleUpdateState,actionState,scaleTypeState,groupIdState,isLiveState ,collaboratorsState,updateCursorSelector}
+export {elementState,selectedElementState,currentToolState,styleUpdateState,actionState,scaleTypeState,groupIdState,isLiveState ,collaboratorsState}

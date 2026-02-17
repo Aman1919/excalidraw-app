@@ -11,7 +11,15 @@ wss.on("connection", (ws,req) => {
   ws.on("message",(message)=>{
 rooms.handleMessage(ws,message.toString())
   })
+rooms.close(ws);
 
+  ws.on("close", () => {
+    console.log("Client disconnected");
+  });
+
+  ws.on("error", (err) => {
+    console.log("Error:", err);
+  });
 });
 
 

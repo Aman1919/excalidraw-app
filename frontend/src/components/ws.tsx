@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { collaboratorsState, elementState, groupIdState, isLiveState,updateCursorSelector } from "../atoms";
-import { useRecoilState } from "recoil";
+import { collaboratorsState, elementState, groupIdState, isLiveState} from "../atoms";
+import { useRecoilState} from "recoil";
 
 export default function useWS() {
   const wsRef = useRef<WebSocket>(null);
@@ -8,6 +8,7 @@ export default function useWS() {
   const [groupId, setGroupId] = useRecoilState(groupIdState);
   const [isLive, setIsLive] = useRecoilState(isLiveState);
   const [collaborators, setCollaborators] = useRecoilState(collaboratorsState);
+
   useEffect(() => {
     console.log("ws effect", isLive, wsRef.current);
     if (!isLive) return;
@@ -26,16 +27,49 @@ export default function useWS() {
     };
     ws.onmessage = (e) => {
       const data = JSON.parse(e.data);
+      const ranX= ()=>Math.floor(Math.random() * window.innerWidth);
+      const ranY= ()=>Math.floor(Math.random() * window.innerHeight);
       if (data.type === "room-created") {
         setGroupId(data.data.groupId);
       } else if (data.type === "room-joined") {
-        console.log(data)
-        setElements(data.canvas);
-        setCollaborators([{ username: data.admin.username, color:data.admin.color,mouseCoords:{x:0,y:0} }, ...data.joiners.map(j => ({ username: j.username, color: j.color ,mouseCoords:{x:0,y:0}}))]);
-        setIsLive("joined");
-      }else if(data.type==="cursor-move"){
+            console.log(data);
+    setElements(data.canvas);
+    // Only set collaborators for the person who just joined
+    setCollaborators([
+      { username: data.admin.username, color: data.admin.color, mouseCoords: {x: ranX(), y: ranY()} }, 
+      ...data.joiners.map(j => ({ 
+        username: j.username, 
+        color: j.color, 
+        mouseCoords: {x: ranX(), y: ranY()}
+      }))
+    ]);
+    setIsLive("joined");
+
+      }else if(data.type==="mouse-move"){
         console.log("cursor move data",data)
-        updateCursorSelector({username:data.user.username,x:data.x,y:data.y})
+        setCollaborators(prev =>
+  prev.map(u =>
+    u.username === data.user.username
+      ? { ...u, mouseCoords: { x: data.x, y: data.y } }
+      : u
+  )
+);
+      }else if(data.type==="new-joiner"){
+ setCollaborators(prev => {
+      const alreadyExists = prev.some(u => u.username === data.username);
+      if (alreadyExists) {
+        return prev; // Don't add duplicate
+      }
+      return [...prev, {
+        username: data.username, 
+        color: data.color, 
+        mouseCoords: {x: ranX(), y: ranY()}
+      }];
+    });
+      }else if(data.type==='mouse-down'){
+        // handle mouse down if needed
+      }else if (data.type==='mouse-up'){  
+        // handle mouse up if needed
       }
     };
     ws.onerror = (err) => {

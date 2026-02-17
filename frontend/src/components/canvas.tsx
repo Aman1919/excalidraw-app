@@ -12,8 +12,9 @@ import { Hover, HoverOverSelectedElements,HoverOverAllElements, HoverOverSelecti
 import { pointElementCollision, selectionCollision } from "./collision";
 import { drawElement, groupSelection } from "./draw";
 import { useRecoilValue, useRecoilState } from "recoil";
-import { elementState, selectedElementState, currentToolState ,styleUpdateState, scaleTypeState, groupIdState} from "../atoms/index.tsx";
+import { elementState, selectedElementState, currentToolState ,styleUpdateState, scaleTypeState, groupIdState,collaboratorsState} from "../atoms/index.tsx";
 import useWS from "./ws.tsx";
+import { DrawCursor } from "./cursor.tsx";
 
 
 export default function Canvas() {
@@ -39,6 +40,7 @@ export default function Canvas() {
   const [lastCoords, setLastCoords] = useState({ x: 0, y: 0 });
   const [textCoords, setTextCoords] = useState({ x: 0, y: 0 });
   const [trashElement,setTrashElement]=useState<string[]>([])
+  const collaborators = useRecoilValue(collaboratorsState)
   const {send}=useWS()
 
   function drawCanvas(
@@ -92,6 +94,9 @@ export default function Canvas() {
       );
     }
     groupSelection(rctx, getSelectedElement());
+    collaborators.forEach(collab=>{
+    DrawCursor(collab.mouseCoords.x,collab.mouseCoords.y,collab.color,collab.username,rctx,ctx)
+    })
   }
  
   function getSelectedElement(){
@@ -103,6 +108,7 @@ export default function Canvas() {
     if (!CanvasRef.current||!ctxRef.current) return;
 
     const { x, y } = getCanvasCoord(e);
+    send({type:"mouse-down",x,y,groupId,currentTool})
     const el = Hover(
       x,
       y,
@@ -168,7 +174,7 @@ export default function Canvas() {
     if (!CanvasRef.current||!ctxRef.current) return;
     
     const { x, y } = getCanvasCoord(e);
-    send({type:"cursor-move",x,y,groupId})
+    send({type:"mouse-move",x,y,groupId})
     Hover(x, y, action, CanvasRef.current, elements, getSelectedElement());
     if(currentTool==='trash'){
      CanvasRef.current.style.cursor='cell'
@@ -229,11 +235,12 @@ export default function Canvas() {
   function MouseUp(e: MouseEvent<HTMLCanvasElement>) {
     if(!CanvasRef.current)return;
     const { x, y } = getCanvasCoord(e);
-
+    send({type:"mouse-up",x,y,groupId,currentTool})
     const el = HoverOverAllElements(x,y,elements,CanvasRef.current);
     if(action==='DELETING'){
       const els = elements.filter((el)=>trashElement.some((tel)=>el.id!==tel))
       setElements(els)
+    localStorage.setItem("elements", JSON.stringify(els));
       setAction('IDLE')
       redraw();
       return;
@@ -274,7 +281,8 @@ export default function Canvas() {
 
   useEffect(() => {
     redraw();
-  }, [elements, draftElement, selectionArea, action, selectedElements,styleUpdate]);
+  }, [elements, draftElement, selectionArea, action, selectedElements,styleUpdate,collaborators]);
+
 
   function getCanvasCoord(e: MouseEvent<HTMLCanvasElement>) {
     if (!CanvasRef.current) return { x: 0, y: 0 };

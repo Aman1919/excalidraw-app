@@ -18,17 +18,28 @@ addJoiners(ws:WebSocket,groupId:string){
 const username = this.createRandomUsernames()
 const color = this.generateRandomColor()
     if(room){
-//    const alreadyPresent = room.admin.ws === ws || room.joiners.some(j => j.ws === ws)
-//     if(alreadyPresent){
-//         ws.send(JSON.stringify({message:"already joined",status:200}))
-//         return
-//     }
-        const data = {username,color,admin:{username:room.admin.username,color:room.admin.color},joiners:room.joiners.map(j=>({username:j.username,color:j.color})),canvas:room.canvas}
         room.joiners.push({username,ws,color})
+
+        const data = {
+            username,
+            color,
+            admin: {username: room.admin.username, color: room.admin.color},
+            joiners: room.joiners
+                .filter(j => j.ws !== ws) 
+                .map(j => ({username: j.username, color: j.color})),
+            canvas: room.canvas
+        }
+
+        room.admin.ws.send(JSON.stringify({type:"new-joiner",username,color,status:200}))
+        room.joiners.forEach(joiner => {
+                joiner.ws.send(JSON.stringify({type:"new-joiner",username,color,status:200}))
+            
+        });
         ws.send(JSON.stringify({type:"room-joined",...data,status:200}))
     }else{
         ws.send(JSON.stringify({message:"incorrect link",status:404}))
     }
+    console.log(this.rooms)
 }
 
 
@@ -39,12 +50,36 @@ const color = this.generateRandomColor()
             this.createRoom(ws,canvas)
         }else if(type==="join-room"){
             this.addJoiners(ws,groupId)
-        }else if(type==='cursor-move'){
-            this.cursorMove(ws,groupId,message);
+        }else if(type==='mouse-move'){
+            this.mouseMove(ws,groupId,message);
+        }else if(type==='mouse-down'){
+            this.mouseDownUp(ws,groupId,message)
+        }
+        else if(type==='mouse-up'){
+            this.mouseDownUp(ws,groupId,message)
         }
     }
 
-    cursorMove(ws:WebSocket,groupId:string,message:string){
+    mouseDownUp(ws:WebSocket,groupId:string,message:string){
+        const {x,y,type} = JSON.parse(message)
+        const room = this.rooms.find((r)=> r.groupId===groupId)
+        if(room){
+                const data = room.admin.ws===ws?room.admin: room.joiners.find(j=>j.ws===ws)
+                const user = {username:data?.username,color:data?.color,message}
+                room.joiners.forEach(joiner => {
+                    if(joiner.ws!==ws){
+                     joiner.ws.send(JSON.stringify({type,x,y,user}))
+                    }
+                });
+                if(room.admin.ws!==ws){
+                     room.admin.ws.send(JSON.stringify({type,x,y,user}))
+                }
+            }
+    }
+
+    
+
+    mouseMove(ws:WebSocket,groupId:string,message:string){
         const {x,y} = JSON.parse(message)
         const room = this.rooms.find((r)=> r.groupId===groupId)
         if(room){
@@ -52,11 +87,11 @@ const color = this.generateRandomColor()
                 const user = {username:data?.username,color:data?.color,message}
                 room.joiners.forEach(joiner => {
                     if(joiner.ws!==ws){
-                     joiner.ws.send(JSON.stringify({type:"cursor-move",x,y,user}))
+                     joiner.ws.send(JSON.stringify({type:"mouse-move",x,y,user}))
                     }
                 });
                 if(room.admin.ws!==ws){
-                     room.admin.ws.send(JSON.stringify({type:"cursor-move",x,y,user}))
+                     room.admin.ws.send(JSON.stringify({type:"mouse-move",x,y,user}))
                 }
             }
     }
@@ -74,5 +109,13 @@ generateRandomColor() {
   const lightness = 55; // readable brightness
 
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+close(ws:WebSocket){
+    ws.on("close",()=>{
+  this.rooms.forEach(room=>{
+    room.joiners = room.joiners.filter(j=>j.ws!==ws);
+  });
+});
 }
 }
