@@ -1,6 +1,6 @@
-import type { ElementType,Style } from "./type";
+// import type { ElementType,Style } from "./type";
 
-export function createDefaultStyle(type: ElementType): Style {
+export function createDefaultStyle() {
   const base = {
     stroke: "#ffffff",
     strokeWidth: 1,

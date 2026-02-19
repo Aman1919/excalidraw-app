@@ -1,4 +1,4 @@
-import {atom, selectorFamily }from "recoil";
+import {atom }from "recoil";
 import type { Actions,CurrentTool,ScaleType,Element, Collaborate} from "../type"
 const elementState = atom<Element[]>({
     key:"elementState",

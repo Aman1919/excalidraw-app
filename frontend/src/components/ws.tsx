@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { collaboratorsState, elementState, groupIdState, isLiveState} from "../atoms";
+import { collaboratorsState, currentToolState, elementState, groupIdState, isLiveState} from "../atoms";
 import { useRecoilState} from "recoil";
 
 export default function useWS() {
@@ -7,8 +7,8 @@ export default function useWS() {
   const [elements, setElements] = useRecoilState(elementState);
   const [groupId, setGroupId] = useRecoilState(groupIdState);
   const [isLive, setIsLive] = useRecoilState(isLiveState);
-  const [collaborators, setCollaborators] = useRecoilState(collaboratorsState);
-
+  const  setCollaborators = useRecoilState(collaboratorsState)[1];
+  const setCurrentTool = useRecoilState(currentToolState)[1];
   useEffect(() => {
     console.log("ws effect", isLive, wsRef.current);
     if (!isLive) return;
@@ -37,7 +37,7 @@ export default function useWS() {
     // Only set collaborators for the person who just joined
     setCollaborators([
       { username: data.admin.username, color: data.admin.color, mouseCoords: {x: ranX(), y: ranY()} }, 
-      ...data.joiners.map(j => ({ 
+      ...data.joiners.map((j: { username: string; color: string; }) => ({ 
         username: j.username, 
         color: j.color, 
         mouseCoords: {x: ranX(), y: ranY()}
