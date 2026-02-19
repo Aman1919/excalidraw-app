@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { collaboratorsState, currentToolState, elementState, groupIdState, isLiveState} from "../atoms";
+import { collaboratorsState,  elementState, groupIdState, isLiveState} from "../atoms";
 import { useRecoilState} from "recoil";
 
 export default function useWS() {
@@ -8,7 +8,6 @@ export default function useWS() {
   const [groupId, setGroupId] = useRecoilState(groupIdState);
   const [isLive, setIsLive] = useRecoilState(isLiveState);
   const  setCollaborators = useRecoilState(collaboratorsState)[1];
-  const setCurrentTool = useRecoilState(currentToolState)[1];
   useEffect(() => {
     console.log("ws effect", isLive, wsRef.current);
     if (!isLive) return;

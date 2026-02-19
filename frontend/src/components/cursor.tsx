@@ -36,7 +36,7 @@ export function DrawCursor(x:number,y:number,color:string,username:string,rctx:a
     // draw username label to the right of the cursor
     if (username) {
         const paddingX = 8;
-        const paddingY = 4;
+        // const paddingY = 4;
         _ctx.font = '12px sans-serif';
         const metrics = _ctx.measureText(username);
         const textW = metrics.width;
